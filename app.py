@@ -111,7 +111,7 @@ class MainMenu(Scene):
                     self.clearScene()
                     return Game(30, 16, 99)
                 if self.buttons[3][1].collidepoint(xy):
-                    pass
+                    return CustomGameMenu()
                     # self.clearScene()
                     # return Game()
 
@@ -128,8 +128,165 @@ class MainMenu(Scene):
         Scene.screen.blits(blit_sequence = self.buttons)
         Scene.screen.blits(blit_sequence = self.button_texts)
 
-class CustomGame(MainMenu):
-    pass
+class CustomGameMenu(Scene):
+    def __init__(self):
+        super().__init__()
+
+        self.init_bg()
+        self.init_buttons()
+        self.init_input()
+
+    def init_bg(self):
+        # load background
+        self.bg = pygame.image.load('resources/graphics/main_menu/custom_game_menu.png').convert()
+        self.bg_rect = self.bg.get_rect(topleft = (0,0))
+
+    def init_buttons(self):
+
+        button_texts = ['Back',
+                        'Start Game']
+
+        self.button = pygame.image.load('resources/graphics/global/menu_button_unselected.png').convert()
+        self.button = pygame.transform.smoothscale(self.button, (200, 47)) # shrink width
+        self.button_rect = self.button.get_rect(midbottom = (240, self.bg_rect.bottom - 30))
+        
+        self.button_selected = pygame.image.load('resources/graphics/global/menu_button_selected.png').convert()
+        self.button_selected = pygame.transform.smoothscale(self.button_selected, (200, 47)) # shrink width
+        
+        # list of buttons and their rects
+        self.buttons = [[self.button.copy(), self.button_rect.copy()] for i in range(len(button_texts))]
+
+        # space the buttons
+        for i, button in enumerate(self.buttons):
+            button[1].right += 250 * i
+
+        # load font
+        self.font = pygame.font.Font('resources/fonts/MinecraftBold-nMK1.otf', 24)
+
+        # create text renders
+        button_texts_surfs = [self.font.render(text, False, 'white') for text in button_texts]
+        button_texts_rects = [surf.get_rect() for surf in button_texts_surfs]
+
+        # center text to according button rects
+        for i, rect in enumerate(button_texts_rects):
+            rect.center = self.buttons[i][1].center
+            rect.centery -= 2 # needed to offset a little
+
+        self.button_texts = list(zip(button_texts_surfs, button_texts_rects))
+
+    def init_input(self):
+        # box
+        num_boxes = 3
+
+        self.input_box = pygame.image.load('resources/graphics/main_menu/input_box.png').convert()
+        self.input_box_selected = pygame.image.load('resources/graphics/main_menu/input_box_selected.png').convert()
+
+        self.input_box_rect = self.input_box.get_rect(midtop = (175, 200))
+
+        self.input_boxes = [[self.input_box.copy(), self.input_box_rect.copy()] for i in range(num_boxes)]
+
+        for i, button in enumerate(self.input_boxes):
+            button[1].top += 62.5 * i
+
+        # text
+        self.active_box_index = -1
+        self.input_texts = ['', '', '']
+        self.input_text_surfs = []
+
+    def validGame(self):
+        '''helper function to check for valid game starting conditions'''
+
+        try:
+            dim_x, dim_y, num_mines = [int(entry) for entry in self.input_texts]
+        except ValueError:
+            return False
+
+        if 10 <= dim_x <= 20:
+            if 10 <= dim_y <= 30:
+                if 10 <= num_mines <= 99:
+                    return True
+        return False
+
+    def handle(self, event):
+        # button collisions
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            mouse_pos = event.pos
+            if self.buttons[0][1].collidepoint(mouse_pos):
+                return self.returnToPrev()
+            if self.buttons[1][1].collidepoint(mouse_pos):
+                if self.validGame():
+                    dim_x, dim_y, num_mines = [int(entry) for entry in self.input_texts]
+                    self.replacePrevScene()
+                    return Game(dim_x, dim_y, num_mines)
+                else:
+                    pass
+
+        # keyboard binding to enter game
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RETURN and self.validGame():
+                dim_x, dim_y, num_mines = [int(entry) for entry in self.input_texts]
+                self.replacePrevScene()
+                return Game(dim_x, dim_y, num_mines)
+
+        # input box collisions
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            clicked_box = False
+            for i, box in enumerate(self.input_boxes):
+                if box[1].collidepoint(event.pos):
+                    clicked_box = True
+                    box[0] = self.input_box_selected
+                    self.active_box_index = i
+                else:
+                    box[0] = self.input_box
+            if not clicked_box:
+                self.active_box_index = -1
+
+        # key bindings for input boxes
+        if self.active_box_index != -1:
+            if event.type == pygame.KEYDOWN:
+                if (event.key in [pygame.K_DOWN, pygame.K_TAB, pygame.K_RETURN]) and self.active_box_index in range(0,2):
+                    self.input_boxes[self.active_box_index][0] = self.input_box
+                    self.input_boxes[self.active_box_index + 1][0] = self.input_box_selected
+                    self.active_box_index += 1
+                if event.key == pygame.K_UP and self.active_box_index in range(1,3):
+                    self.input_boxes[self.active_box_index][0] = self.input_box
+                    self.input_boxes[self.active_box_index - 1][0] = self.input_box_selected
+                    self.active_box_index -= 1
+
+
+        # text input
+        if self.active_box_index != -1:
+            if event.type == pygame.KEYDOWN:
+                i = self.active_box_index
+                if event.key == pygame.K_BACKSPACE:
+                    self.input_texts[i] = self.input_texts[i][:-1]
+                else:
+                    if event.unicode.isnumeric() and len(self.input_texts[i]) < 2:
+                        self.input_texts[i] += event.unicode
+
+    def update(self):
+        # button selection highlighting
+        for button in self.buttons:
+            if button[1].collidepoint(pygame.mouse.get_pos()):
+                button[0] = self.button_selected.copy()
+            else:
+                button[0] = self.button.copy()
+
+        # text input rendering
+        input_text_surfs = [self.font.render(text, False, 'white') for text in self.input_texts]
+        input_text_rects = [surf.get_rect() for surf in input_text_surfs]
+
+        for i, rect in enumerate(input_text_rects):
+            rect.center = self.input_boxes[i][1].center
+
+        self.input_text_renders = list(zip(input_text_surfs, input_text_rects))
+
+    def draw(self):
+        self.screen.blit(self.bg, self.bg_rect)
+        self.screen.blits(self.buttons)
+        self.screen.blits(self.button_texts)
+        self.screen.blits(self.input_boxes)
+        self.screen.blits(self.input_text_renders)
 
 class Game(Scene):
     def __init__(self, dim_x = 10, dim_y = 10, num_mines = 10):
