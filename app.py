@@ -224,12 +224,12 @@ class CustomGameMenu(Scene):
         '''helper function to check for valid game starting conditions'''
 
         try:
-            dim_x, dim_y, num_mines = [int(entry) for entry in self.input_texts]
+            dim_y, dim_x, num_mines = [int(entry) for entry in self.input_texts]
         except ValueError:
             return False
 
-        if 10 <= dim_x <= 20:
-            if 10 <= dim_y <= 30:
+        if 10 <= dim_y <= 20:
+            if 10 <= dim_x <= 30:
                 if 10 <= num_mines <= 99:
                     return True
         return False
@@ -243,7 +243,7 @@ class CustomGameMenu(Scene):
                 return self.returnToPrev()
             if self.buttons[1][1].collidepoint(mouse_pos):
                 if self.validGame():
-                    dim_x, dim_y, num_mines = [int(entry) for entry in self.input_texts]
+                    dim_y, dim_x, num_mines = [int(entry) for entry in self.input_texts]
                     self.button_click.play()
                     self.replacePrevScene()
                     return Game(dim_x, dim_y, num_mines)
@@ -253,7 +253,7 @@ class CustomGameMenu(Scene):
         # keyboard binding to enter game
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RETURN and self.validGame():
-                dim_x, dim_y, num_mines = [int(entry) for entry in self.input_texts]
+                dim_y, dim_x, num_mines = [int(entry) for entry in self.input_texts]
                 self.replacePrevScene()
                 return Game(dim_x, dim_y, num_mines)
 
