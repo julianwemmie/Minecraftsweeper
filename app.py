@@ -6,6 +6,10 @@ class Scene:
     screen = None
     render_stack = []
     clock = None
+    music = None
+    button_click = None
+    mine_click = None
+    torch_click = None
 
     def __init__(self):
         # scenes are automatically added to the render stack when initialized. 
@@ -97,23 +101,42 @@ class MainMenu(Scene):
         for i, text in enumerate(button_texts):
             self.button_dict[text] = self.buttons[i]
 
+        #-----------------------
+        self.disc = pygame.image.load('resources/graphics/game/disc.png').convert_alpha()
+        self.disc_surf = pygame.transform.scale2x(self.disc)
+        self.disc_rect = self.disc_surf.get_rect()
+
+        self.disc_rect.center = (50, self.HEIGHT - 35)
+        
+        self.no_music = pygame.image.load('resources/graphics/game/no_music.png').convert_alpha()
+        self.no_music = pygame.transform.scale2x(self.no_music)
+
     def handle(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
                 xy = pygame.mouse.get_pos()
                 if self.buttons[0][1].collidepoint(xy):
+                    self.button_click.play()
                     self.clearScene()
                     return Game(10, 10, 10)
                 if self.buttons[1][1].collidepoint(xy):
+                    self.button_click.play()
                     self.clearScene()
                     return Game(16, 16, 40)
                 if self.buttons[2][1].collidepoint(xy):
+                    self.button_click.play()
                     self.clearScene()
                     return Game(30, 16, 99)
                 if self.buttons[3][1].collidepoint(xy):
+                    self.button_click.play()
                     return CustomGameMenu()
-                    # self.clearScene()
-                    # return Game()
+
+                # music toggle
+                if self.disc_rect.collidepoint(xy):
+                    if Scene.music:
+                        Scene.music = False
+                    else:
+                        Scene.music = True
 
     def update(self):
         # button selection highlighting
@@ -124,9 +147,12 @@ class MainMenu(Scene):
                 button[0] = self.button.copy()
 
     def draw(self):
-        Scene.screen.blit(self.bg, self.bg_rect)
-        Scene.screen.blits(blit_sequence = self.buttons)
-        Scene.screen.blits(blit_sequence = self.button_texts)
+        self.screen.blit(self.bg, self.bg_rect)
+        self.screen.blits(blit_sequence = self.buttons)
+        self.screen.blits(blit_sequence = self.button_texts)
+        self.screen.blit(self.disc_surf, self.disc_rect)
+        if not self.music:
+            self.screen.blit(self.no_music, self.disc_rect)
 
 class CustomGameMenu(Scene):
     def __init__(self):
@@ -184,12 +210,13 @@ class CustomGameMenu(Scene):
         self.input_box_rect = self.input_box.get_rect(midtop = (175, 200))
 
         self.input_boxes = [[self.input_box.copy(), self.input_box_rect.copy()] for i in range(num_boxes)]
+        self.input_boxes[0][0] = self.input_box_selected.copy() # start with first box selected
 
         for i, button in enumerate(self.input_boxes):
             button[1].top += 62.5 * i
 
         # text
-        self.active_box_index = -1
+        self.active_box_index = 0 # start with first box selected
         self.input_texts = ['', '', '']
         self.input_text_surfs = []
 
@@ -212,10 +239,12 @@ class CustomGameMenu(Scene):
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             mouse_pos = event.pos
             if self.buttons[0][1].collidepoint(mouse_pos):
+                self.button_click.play()
                 return self.returnToPrev()
             if self.buttons[1][1].collidepoint(mouse_pos):
                 if self.validGame():
                     dim_x, dim_y, num_mines = [int(entry) for entry in self.input_texts]
+                    self.button_click.play()
                     self.replacePrevScene()
                     return Game(dim_x, dim_y, num_mines)
                 else:
@@ -233,6 +262,7 @@ class CustomGameMenu(Scene):
             clicked_box = False
             for i, box in enumerate(self.input_boxes):
                 if box[1].collidepoint(event.pos):
+                    self.button_click.play()
                     clicked_box = True
                     box[0] = self.input_box_selected
                     self.active_box_index = i
@@ -305,7 +335,6 @@ class Game(Scene):
 
         self.game_running = False
         self.in_game_time = 0
-        self.play_music = True
 
         # pygame settings
         Scene.screen = pygame.display.set_mode(size = (self.WIDTH, self.HEIGHT))
@@ -402,6 +431,8 @@ class Game(Scene):
                 self.tile_rect.topleft = self.getPXY(xy)
 
                 if self.tile_rect.collidepoint(mouse_pos) and xy not in self.game.getFlagsXY():
+                    self.mine_click.play()
+
                     while xy in self.game.getMinesXY() and not self.game_running: # new board if first move is a mine
                         self.game = Minesweeper(self.dim_x, self.dim_y, self.num_mines)
                     self.game_running = True
@@ -414,13 +445,15 @@ class Game(Scene):
 
             # music toggle
             if self.disc_rect.collidepoint(mouse_pos):
-                if self.play_music:
-                    self.play_music = False
+                self.button_click.play()
+                if Scene.music:
+                    Scene.music = False
                 else:
-                    self.play_music = True
+                    Scene.music = True
 
             # in-game menu
             if self.menu_icon_rect.collidepoint(mouse_pos):
+                self.button_click.play()
                 return Game_menu()
 
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3: # right click interactions
@@ -431,6 +464,8 @@ class Game(Scene):
                 self.tile_rect.topleft = self.getPXY(xy)
 
                 if self.tile_rect.collidepoint(mouse_pos) and self.game_running:
+                    self.torch_click.play()
+
                     x,y = xy
                     if xy in self.game.getFlagsXY():
                         self.game.removeFlag(x, y)
@@ -451,7 +486,7 @@ class Game(Scene):
         self.screen.fill(pygame.Color(50,50,50))
         self.screen.blits(self.bg)
 
-        if not self.play_music:
+        if not self.music:
             self.screen.blit(self.no_music, self.no_music_rect)
 
         # draws number of mines in adjacent cells
@@ -528,6 +563,9 @@ class Game_menu(Scene):
     def __init__(self):
         super().__init__()
 
+        # pause music
+        self.music = False
+
         self.WIDTH = self.getPrevScene().WIDTH
         self.HEIGHT = self.getPrevScene().HEIGHT
 
@@ -595,6 +633,7 @@ class Game_menu(Scene):
             if event.button == 1:
                 xy = pygame.mouse.get_pos()
                 if self.buttons[0][1].collidepoint(xy):
+                    self.button_click.play()
                     return self.returnToPrev()
 
                 if self.buttons[1][1].collidepoint(xy):
@@ -603,10 +642,12 @@ class Game_menu(Scene):
                     dim_y = self.getPrevScene().dim_y
                     num_mines = self.getPrevScene().num_mines
 
+                    self.button_click.play()
                     self.clearScene()
                     return Game(dim_x, dim_y, num_mines)
 
                 if self.buttons[2][1].collidepoint(xy):
+                    self.button_click.play()
                     self.clearScene()
                     return MainMenu()
 
@@ -710,10 +751,12 @@ class Game_isWin(Scene):
                     dim_y = self.getPrevScene().dim_y
                     num_mines = self.getPrevScene().num_mines
 
+                    self.button_click.play()
                     self.clearScene()
                     return Game(dim_x, dim_y, num_mines)
 
                 if self.buttons[1][1].collidepoint(xy):
+                    self.button_click.play()
                     self.clearScene()
                     return MainMenu()
 
@@ -848,10 +891,12 @@ class Game_isLoss(Scene):
                     dim_y = self.getPrevScene().dim_y
                     num_mines = self.getPrevScene().num_mines
 
+                    self.button_click.play()
                     self.clearScene()
                     return Game(dim_x, dim_y, num_mines)
 
                 if self.buttons[1][1].collidepoint(xy):
+                    self.button_click.play()
                     self.clearScene()
                     return MainMenu()
 
@@ -881,7 +926,23 @@ def main():
     Scene.clock = pygame.time.Clock()
     scene = MainMenu()
 
+    # global music and sounds
+    pygame.mixer.init()
+    Scene.music = True
+    bg_music = pygame.mixer.Sound('resources/music/semi-calm.mp3')
+    bg_music.play(-1)
+
+    Scene.button_click = pygame.mixer.Sound('resources/sounds/click.wav')
+    Scene.mine_click = pygame.mixer.Sound('resources/sounds/mine.wav')
+    Scene.torch_click = pygame.mixer.Sound('resources/sounds/torch.wav')
+    
     while True:
+        # global music control
+        if scene.music:
+            bg_music.set_volume(0.6)
+        else:
+            bg_music.set_volume(0)
+
         if pygame.event.get(pygame.QUIT):
             pygame.quit()
             quit()
