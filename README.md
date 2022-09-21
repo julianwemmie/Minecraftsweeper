@@ -15,6 +15,7 @@ All the elements of Minesweeper have been reskinned with a Minecraft twist. Inte
  - Game state information displayed in "inventory".
  - Pause menu can be accessed through esc or inventory slot.
  - Animation for loss screen to replicate original minesweeper.
+ - Original music score and custom sound effects.
  ### Code
  - A single game loop for the program.
  - All scenes inherit from an abstract scene class.
@@ -22,11 +23,11 @@ All the elements of Minesweeper have been reskinned with a Minecraft twist. Inte
  - Minesweeper game mechanics are in separate class and fully encapsulated such that it could be used for any minesweeper theme/skin. 
 
  ## Screenshots
- <img src="screenshots/main_menu.png" alt="main menu" height="200">
- <img src="screenshots/custom_game_menu.png" alt="custom game menu" height="200">
+ <img src="screenshots/main_menu.PNG" alt="main menu" height="200">
+ <img src="screenshots/custom_game_menu.PNG" alt="custom game menu" height="200">
  <img src="screenshots/game.png" alt="gameplay" width="300">
- <img src="screenshots/loss.png" alt="loss message" width="300">
- <img src="screenshots/paused.png" alt="paused menu" width="300">
+ <img src="screenshots/loss.PNG" alt="loss message" width="300">
+ <img src="screenshots/paused.PNG" alt="paused menu" width="300">
 
  ## Acknowledgments
  Thanks to [pygame](https://www.pygame.org/) authors and contributors.
