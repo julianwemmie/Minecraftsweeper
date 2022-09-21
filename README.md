@@ -1,7 +1,7 @@
 # Minecraftsweeper
 A Minecraft themed version of the classic game Minesweeper. Written as an exercise for practicing inheritance, implementing abstract classes, basic game design, and idea execution (and a little graphic design!).
 
-All the elements of Minesweeper have been reskinned with a Minecraft twist. Intead of tiles, you mine stone blocks. Mines/Bombs are now creepers, so instead of placing flags to prevent setting off mines, you place torches (to illuminate the cave, so to speak). Game information is now placed in your "Inventory". The number of flags remaining is the how many torches you have left. Time is kept by the how many clock item you have. The number of tiles destroyed is how many stone blocks you have. Additionally, you can toggle music (when implemented) by clicking the music disc, and the pause menu can also be accessed through the inventory.
+All the elements of Minesweeper have been reskinned with a Minecraft twist. Intead of tiles, you mine stone blocks. Mines/Bombs are now creepers, so instead of placing flags to prevent setting off mines, you place torches (to illuminate the cave, so to speak). Game information is now placed in your "Inventory". The number of flags remaining is the how many torches you have left. Time is kept by the how many clock item you have. The number of tiles destroyed is how many stone blocks you have. Additionally, you can toggle music by clicking the music disc, and the pause menu can also be accessed through the inventory.
 
 ## Installation
 `pip install pygame`
